@@ -11,6 +11,8 @@
 #define MAX_CMD 5 // max num of commands which are linked by pipe
 #define MAX_OPTION 10 // max num of options
 #define MAX_ARG 5 // max num of arguments(not include options)
+#define MAX_INPUT 1 // single source of reinput temporarily
+#define MAX_OUTPUT 1 // single channel of reoutput temporarily
 
 //symbols
 #define SYMBOL_PIPE "|"
@@ -18,7 +20,8 @@
 #define SYMBOL_REOUTPUT_COVER ">"
 #define SYMBOL_REOUTPUT_APPEND ">>"
 
-//redirection type
+//redirection type for output
+#define TYPE_UNKNOWN 0
 #define TYPE_COVER 1
 #define TYPE_APPEND 2
 
@@ -36,10 +39,10 @@ struct Cmd{
 	int argNum; // num of arguments
 	char args[MAX_ARG][MAX_LEN]; // args(strings)
 	int inputNum; // num of redirection input(single)
-	char reInput[MAX_LEN]; // redirection input(single source of input)
+	char reInput[MAX_INPUT][MAX_LEN]; // redirection input(single source of input)
 	int outputNum; // num of redirection output(single)
 	int outputType; // type of redirection output(TYPE_COVER or TYPE_APPEND)
-	char reOutput[MAX_LEN]; // redirection output(single channel of output)
+	char reOutput[MAX_OUTPUT][MAX_LEN]; // redirection output(single channel of output)
 };
 
 #endif
