@@ -1,7 +1,7 @@
 all: main
 
 main: error.o command.o process.o main.o
-	gcc $^ -o $@
+	gcc $^ -o -Wall $@
 
 clean:
 	rm -f main *.d *.o
@@ -19,4 +19,4 @@ include $(sources:.c=.d)
 	rm -f $@.$$$$
 
 %.o: %.c
-	$(COMPILE.c) $(OUTPUT_OPTION) $<
+	$(COMPILE.c) $(OUTPUT_OPTION) -Wall $<

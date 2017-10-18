@@ -31,10 +31,6 @@
 #define CMDSTR_CD "cd"
 #define CMDSTR_EXIT "exit"
 
-extern int execls(const struct Cmd* command);
-extern int execexit(const struct Cmd* command);
-extern int execcd(const struct Cmd* command);
-
 struct Cmd{
 	char name[MAX_LEN]; // command name(string)
 	int optionNum; // num of options
@@ -47,5 +43,9 @@ struct Cmd{
 	int outputType; // type of redirection output(TYPE_COVER or TYPE_APPEND)
 	char reOutput[MAX_OUTPUT][MAX_LEN]; // redirection output(single channel of output)
 };
+
+extern int execls(const struct Cmd* command);
+extern int execexit(const struct Cmd* command);
+extern int execcd(const struct Cmd* command);
 
 #endif

@@ -12,16 +12,16 @@
  */
 static int gettokens(const char* str, char** tokens, int* tokenNum)
 {
-	tokenNum = 0; // num of tokens
+	*tokenNum = 0; // num of tokens
 	char tempstr[MAX_LEN]; // a copy string for str
 	if(strcpy(tempstr,str)==NULL) return ERR_STRCPY; 
 	char* ptr = NULL;
 	if(ptr = strtok(tempstr," ")){
-		if(strcpy(tokens[tokenNum++],ptr)==NULL) return ERR_STRCPY;
+		if(strcpy(tokens[(*tokenNum)++],ptr)==NULL) return ERR_STRCPY;
 		while(ptr = strtok(NULL," ")){
-			if(tokenNum>=MAX_TOKEN) return ERR_OVER_TOKEN; // too many tokens
+			if((*tokenNum)>=MAX_TOKEN) return ERR_OVER_TOKEN; // too many tokens
 			else{
-				if(strcpy(tokens[tokenNum++],ptr)==NULL) return ERR_STRCPY;
+				if(strcpy(tokens[(*tokenNum)++],ptr)==NULL) return ERR_STRCPY;
 			}
 		}
 	}
@@ -36,11 +36,11 @@ static int gettokens(const char* str, char** tokens, int* tokenNum)
 static void initcmd(struct Cmd* command)
 {
 	// init struct Cmd
-	command.optionNum = 0;
-	command.argNum = 0;
-	command.intputNum = 0;
-	command.outputNum = 0;
-	command.outputType = TYPE_UNKNOWN;
+	command->optionNum = 0;
+	command->argNum = 0;
+	command->inputNum = 0;
+	command->outputNum = 0;
+	command->outputType = TYPE_UNKNOWN;
 }
 
 /*
@@ -54,8 +54,8 @@ static void initcmd(struct Cmd* command)
  */
 static int savecmd(const struct Cmd* command, struct Cmd* commands, int* commandNum)
 {
-	if(commandNum>=MAX_CMD) return ERR_OVER_CMD;	
-	if(memcpy(commands[(*commandNum)++]),command,sizeof(struct Cmd))==NULL) return ERR_MEMCPY;
+	if(*commandNum>=MAX_CMD) return ERR_OVER_CMD;	
+	if(memcpy(&(commands[(*commandNum)++]),command,sizeof(struct Cmd))==NULL) return ERR_MEMCPY;
 	return ERR_SUCC;	
 }
 
