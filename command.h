@@ -30,7 +30,7 @@
 #define CMDSTR_CD "cd"
 #define CMDSTR_EXIT "exit"
 
-extern int execmd(const char* str);
+extern int process(const char* str);
 
 struct Cmd{
 	char name[MAX_LEN]; // command name(string)

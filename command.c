@@ -30,6 +30,7 @@ static int gettokens(const char* str, char** tokens, int* tokenNum)
 
 /*
  * initcmd: init command
+ *
  * @command: the command which need to init
  */
 static void initcmd(struct Cmd* command)
@@ -39,10 +40,12 @@ static void initcmd(struct Cmd* command)
 	command.argNum = 0;
 	command.intputNum = 0;
 	command.outputNum = 0;
+	command.outputType = TYPE_UNKNOWN;
 }
 
 /*
  * savecmd: save the command into commands
+ *
  * @command: one command wait to save
  * @commands: array of struct Cmd to store new command
  * @commandNum: current num of commands
@@ -103,12 +106,7 @@ static int getcmds(const char** tokens,const int tokenNum,struct Cmd* commands,i
 				int len = strlen(token);
 				for(int i = 1;i < len;i++){
 					if(tempCmd.optionNum>=MAX_OPTION) return ERR_OVER_OPTION; // toomuch options
-					if((token[i]>='a'&&token[i]<='z') || (token[i]>='A'&&token[i]<='Z')){
-						tempCmd.options[tempCmd.optionNum++] = token[i]; // save the option character
-					}
-					else{
-						return ERR_INVALID_OPTION; // invalid option character
-					}
+					tempCmd.options[tempCmd.optionNum++] = token[i]; // save the option character
 				}				
 			}
 			// redirection input
@@ -140,7 +138,8 @@ static int getcmds(const char** tokens,const int tokenNum,struct Cmd* commands,i
 				}
 				// arguments
 				else{
-					
+					if(tempCmd.argNum>=MAX_ARG) return ERR_OVER_ARG;
+					if(strcpy(tempCmd.args[tempCmd.argNum++],token)==NULL) return ERR_STRCPY; // copy the argument info	
 				}
 			}
 				
@@ -159,14 +158,85 @@ static int getcmds(const char** tokens,const int tokenNum,struct Cmd* commands,i
 }
 
 /*
- * execmd: execute command
+ * checkoptions: check option characters
+ *
+ * @options: the options array of some struct Cmd
+ * @optionsNum: the num of option characters
+ */
+static int checkoptions(const char* options,const int optionNum)
+{
+	for(int i = 0;i < optionNum;i++){
+		if((options[i]>='a'&&options[i]<='z') || (options[i]>='A'&&options[i]<='Z')){} // do nothing
+		else return ERR_INVALID_OPTION; // invalid option character
+	}
+	return ERR_SUCC;
+}
+
+/*
+ * checkcmds: check commands
+ * 
+ * @commands: the command array to check
+ * @commandNum: the num of commands
+ *
+ * Check the commands of the array one by one, if any error occurs, just return.
+ */
+static int checkcmds(const struct Cmd* commands,const int commandNum)
+{
+	for(int i = 0;i < commandNum;i++){
+		struct Cmd* curcmd = commands[i]; // command info
+		char* curname = curcmd->name; // command name
+
+		// ls
+		if(strcmp(curname,CMDSTR__LS)==0){
+			int errcode = checkoptions(curcmd->options,curcmd->optionNum);
+			if(errcode!=ERR_SUCC) return errcode;
+			if(curcmd->inputNum!=0) return ERR_INVALID_INPUT // redundant reinput
+			if(curcmd->outputNum!=0 && curcmd->outputType!=TYPE_COVER && curcmd->outputType!=TYPE_APPEND) return ERR_INVALID_OUTPUT_TYPE; // invalid output type
+		}
+		// exit
+		else if(strcmp(curname,CMDSTR_EXIT)==0){
+			if(curcmd->optionNum!=0) return ERR_INVALID_OPTION; // redundant option
+			if(curcmd->argNum!=0) return ERR_INVALID_ARG; // redundant argument
+			if(curcmd->inputNum!=0) return ERR_INVALID_INPUT; // redundant reinput
+			if(curcmd->outputNum!=0) return ERR_INVALID_OUTPUT; // redundant output
+		}
+		// cd
+		else if(strcmp(curname,CMDSTR_CD)==0){
+			int errcode = checkoptions(curcmd->options,curcmd->optionNum);
+			if(errcode!=ERR_SUCC) return errcode;
+			if(curcmd->argNum==0) return ERR_INVALID_ARG; // lack of argument
+			if(curcmd->inputNum!=0) return ERR_INVALID_INPUT; // redundant reinput
+			if(curcmd->outputNum!=0 && curcmd->outputType!=TYPE_COVER && curcmd->outputType!=TYPE_APPEND) return ERR_INVALID_OUTPUT_TYPE; // invalid output type
+		}
+		// invalid command name
+		else return ERR_INVALID_NAME;
+	}
+	return ERR_SUCC;
+}
+
+/*
+ * execmds: execute the commands in the array
+ *
+ * @commands: the command array
+ * @commandNum: the num of command array
+ *
+ * Execute the commands in the array one by one, note that the commands in the array is connected by pipe symbol, so the output of prev command is the
+ * intput of next command.
+ */
+static int execmds(const struct Cmd* commands,const int commandNum)
+{
+	
+}
+
+/*
+ * process: process input line
  *
  * @str: input string from standard input(console)
  *
- * Get tokens first, then parse the tokens to check if the command is valid,
+ * Get tokens first, parse the tokens to get commands, and then check if the commands are valid,
  * execute it at last.
  */
-int execmd(const char* str)
+int process(const char* str)
 {
 	// get tokens from the input string
 	int tokenNum = 0; // num of tokens
@@ -178,4 +248,12 @@ int execmd(const char* str)
 	int cmdNum = 0; // num of commands
 	struct Cmd commands[MAX_CMD]; // save parsed commands	
 	errcode = getcmds(tokens,tokenNum,commands,&commandNum);
+	if(errcode!=ERR_SUCC) return errcode;
+
+	// check commands
+	errcode = checkcmds(commands,cmdNum);
+	if(errcode!=ERR_SUCC) return errcode;
+
+	// execute commands
+	//
 }

@@ -22,7 +22,7 @@ int main(int argc,char **argv)
 		// get input string
 		if(gets(inputStr)!=NULL){
 			// execute command
-			int errcode = execmd(inputStr);
+			int errcode = process(inputStr);
 
 			// print error message
 			printerr(errcode);
