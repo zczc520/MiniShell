@@ -27,6 +27,10 @@
 // C operation error
 #define ERR_MEMCPY -0x30 // memcpy error
 #define ERR_STRCPY -0x31 // strcpy error
+#define ERR_CHDIR - 0x32 // chdir error
+
+// unknown error
+#define ERR_UNKNOWN = -0x100 // unknown error
 
 extern void printerr(int errcode);
 

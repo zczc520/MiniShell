@@ -1,5 +1,4 @@
-#include "command.h"
-#include "error.h"
+#include "process.h"
 
 int main(int argc,char **argv)
 {
