@@ -1,14 +1,14 @@
 all: main
 
-main: error.o command.o process.o main.o
-	gcc $^ -o -Wall $@
+main: myerror.o command.o process.o main.o
+	gcc $^ -Wall -o $@
 
 clean:
 	rm -f main *.d *.o
 
 .PHONY: clean all
 
-sources = error.c command.c process.c main.c
+sources = myerror.c command.c process.c main.c
 
 include $(sources:.c=.d)
 
@@ -19,4 +19,4 @@ include $(sources:.c=.d)
 	rm -f $@.$$$$
 
 %.o: %.c
-	$(COMPILE.c) $(OUTPUT_OPTION) -Wall $<
+	$(COMPILE.c) -g -Wall $(OUTPUT_OPTION) $<

@@ -1,5 +1,12 @@
 #include "process.h"
 
+static void rmenter(char* inputStr)
+{
+	for(int i = 0;i < MAX_LEN;i++){
+		if(inputStr[i]=='\n') inputStr[i]='\0';
+	}
+}
+
 int main(int argc,char **argv)
 {
 	// save input string
@@ -8,10 +15,10 @@ int main(int argc,char **argv)
 	char cwd[MAX_LEN];
 
 	// wait for command
-	while(true){
+	while(1){
 		// print prompt
 		if(getcwd(cwd,MAX_LEN)){
-			printf("MiniShell %s:",cwd);
+			printf("MiniShell:%s$ ",cwd);
 		}
 		else{
 			printf("Get current work directory failed!\n");
@@ -19,7 +26,10 @@ int main(int argc,char **argv)
 		}
 
 		// get input string
-		if(gets(inputStr)!=NULL){
+		if(fgets(inputStr,MAX_LEN,stdin)!=NULL){
+			// remove \n
+			rmenter(inputStr);
+
 			// execute command
 			int errcode = process(inputStr);
 

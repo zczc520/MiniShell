@@ -10,15 +10,15 @@
  * Parse the input string, and save the tokens into 2nd param, save the
  * num of tokens into 3rd param.
  */
-static int gettokens(const char* str, char** tokens, int* tokenNum)
+static int gettokens(const char* str, char tokens[][MAX_LEN], int* tokenNum)
 {
 	*tokenNum = 0; // num of tokens
 	char tempstr[MAX_LEN]; // a copy string for str
 	if(strcpy(tempstr,str)==NULL) return ERR_STRCPY; 
 	char* ptr = NULL;
-	if(ptr = strtok(tempstr," ")){
+	if((ptr = strtok(tempstr," "))!=NULL){
 		if(strcpy(tokens[(*tokenNum)++],ptr)==NULL) return ERR_STRCPY;
-		while(ptr = strtok(NULL," ")){
+		while((ptr = strtok(NULL," "))!=NULL){
 			if((*tokenNum)>=MAX_TOKEN) return ERR_OVER_TOKEN; // too many tokens
 			else{
 				if(strcpy(tokens[(*tokenNum)++],ptr)==NULL) return ERR_STRCPY;
@@ -71,12 +71,12 @@ static int savecmd(const struct Cmd* command, struct Cmd* commands, int* command
  * Then save the parsed commands into an array of struct Cmd.
  * If there is any error occurs, return the erro code immediately.
  */
-static int getcmds(const char** tokens,const int tokenNum,struct Cmd* commands,int* commandNum)
+static int getcmds(const char tokens[][MAX_LEN],const int tokenNum,struct Cmd* commands,int* commandNum)
 {
 	int tokenIndex = 0; // current index of tokens
 	*commandNum = 0; 
 
-	while(true){
+	while(1){
 		// parse the tokens to get command
 		struct Cmd tempCmd; // save temp command
 		initcmd(&tempCmd); // init the command
@@ -90,14 +90,13 @@ static int getcmds(const char** tokens,const int tokenNum,struct Cmd* commands,i
 
 		// get command options, arguments and redirection info
 		if(tokenIndex >= tokenNum){
-		   	// this is a command without any options or arguments
+		   	// this is the last command without any options or arguments
 			int errcode = savecmd(&tempCmd,commands,commandNum);
-			if(errcode!=ERR_SUCC) return errcode;
-			else break;
+			return errcode;
 		}
-		char* token = tokens[tokenIndex++]; // save current token
-		bool isReInput = false; // whether has redirection input symbol
-		bool isReOutput = false; // whether has redirection output symbol
+		const char* token = tokens[tokenIndex++]; // save current token
+		int isReInput = 0; // whether has redirection input symbol
+		int isReOutput = 0; // whether has redirection output symbol
 		int outputType = TYPE_UNKNOWN; // redirection type of output
 		// if get a pipe symbol, then just goto parse next command
 		while(strcmp(token,SYMBOL_PIPE)!=0){
@@ -110,28 +109,28 @@ static int getcmds(const char** tokens,const int tokenNum,struct Cmd* commands,i
 				}				
 			}
 			// redirection input
-			else if(strcmp(token,SYMBOL_REINPUT)==0) isReInput = true;
+			else if(strcmp(token,SYMBOL_REINPUT)==0) isReInput = 1;
 			// redirection output(cover type)
 			else if(strcmp(token,SYMBOL_REOUTPUT_COVER)==0){
-				isReOutput = true;
+				isReOutput = 1;
 				outputType = TYPE_COVER;
 			}
 			// redirection output(append type)
 			else if(strcmp(token,SYMBOL_REOUTPUT_APPEND)==0){
-				isReOutput = true; 
+				isReOutput = 1; 
 				outputType = TYPE_APPEND;
 			}
 			// arguments or reinput file or reoutput file
 			else{
 				// reinput file
-				if(isReInput){
-					isReInput = false;
+				if(isReInput==1){
+					isReInput = 0;
 					if(tempCmd.inputNum>=MAX_INPUT) return ERR_OVER_INPUT; // toomuch input source
 					if(strcpy(tempCmd.reInput[tempCmd.inputNum++],token)==NULL) return ERR_STRCPY; // copy the reinput file name
 				}
 				// reoutput file
-				else if(isReOutput){
-					isReOutput = false;
+				else if(isReOutput==1){
+					isReOutput = 0;
 					if(tempCmd.outputNum>=MAX_OUTPUT) return ERR_OVER_OUTPUT; // toomuch output source
 					if(strcpy(tempCmd.reOutput[tempCmd.outputNum++],token)==NULL) return ERR_STRCPY; // copy the reoutput file name
 					tempCmd.outputType = outputType; // save the reoutput type(cover or append)
@@ -145,13 +144,15 @@ static int getcmds(const char** tokens,const int tokenNum,struct Cmd* commands,i
 				
 			// get next token
 			if(tokenIndex >= tokenNum){
-				// this is the last token(not pipe symbol), so that's just the last command, we just need to save it and break
+				// this is the last token(not pipe symbol), so that's just the last command with arg/opt, we just need to save it and break
 				int errcode = savecmd(&tempCmd,commands,commandNum);
-				if(errcode!=ERR_SUCC) return errcode;
-				else break;
+				return errcode; // SUCC or ERROR
 			}
-			char* token = tokens[tokenIndex++];
+			token = tokens[tokenIndex++];
 		}
+		// save the command
+		int errcode = savecmd(&tempCmd,commands,commandNum);
+		if(errcode!=ERR_SUCC) return errcode;
 	}
 
 	return ERR_SUCC;
@@ -183,33 +184,33 @@ static int checkoptions(const char* options,const int optionNum)
 static int checkcmds(const struct Cmd* commands,const int commandNum)
 {
 	for(int i = 0;i < commandNum;i++){
-		struct Cmd* curcmd = commands[i]; // command info
-		char* curname = curcmd->name; // command name
+		const struct Cmd curcmd = commands[i]; // command info
+		const char* curname = curcmd.name; // command name
 
 		// ls
-		if(strcmp(curname,CMDSTR__LS)==0){
-			int errcode = checkoptions(curcmd->options,curcmd->optionNum);
+		if(strcmp(curname,CMDSTR_LS)==0){
+			int errcode = checkoptions(curcmd.options,curcmd.optionNum);
 			if(errcode!=ERR_SUCC) return errcode;
-			if(curcmd->inputNum!=0) return ERR_INVALID_INPUT // redundant reinput
-			if(curcmd->outputNum!=0 && curcmd->outputType!=TYPE_COVER && curcmd->outputType!=TYPE_APPEND) return ERR_INVALID_OUTPUT_TYPE; // invalid output type
+			if(curcmd.inputNum!=0) return ERR_INVALID_INPUT; // redundant reinput
+			if(curcmd.outputNum!=0 && curcmd.outputType!=TYPE_COVER && curcmd.outputType!=TYPE_APPEND) return ERR_INVALID_OUTPUT_TYPE; // invalid output type
 		}
 		// exit
 		else if(strcmp(curname,CMDSTR_EXIT)==0){
-			if(curcmd->optionNum!=0) return ERR_INVALID_OPTION; // redundant option
-			if(curcmd->argNum!=0) return ERR_INVALID_ARG; // redundant argument
-			if(curcmd->inputNum!=0) return ERR_INVALID_INPUT; // redundant reinput
-			if(curcmd->outputNum!=0) return ERR_INVALID_OUTPUT; // redundant output
+			if(curcmd.optionNum!=0) return ERR_INVALID_OPTION; // redundant option
+			if(curcmd.argNum!=0) return ERR_INVALID_ARG; // redundant argument
+			if(curcmd.inputNum!=0) return ERR_INVALID_INPUT; // redundant reinput
+			if(curcmd.outputNum!=0) return ERR_INVALID_OUTPUT; // redundant output
 		}
 		// cd
 		else if(strcmp(curname,CMDSTR_CD)==0){
-			int errcode = checkoptions(curcmd->options,curcmd->optionNum);
+			int errcode = checkoptions(curcmd.options,curcmd.optionNum);
 			if(errcode!=ERR_SUCC) return errcode;
-			if(curcmd->argNum!=1) return ERR_INVALID_ARG; // invalid argument num
-			if(curcmd->inputNum!=0) return ERR_INVALID_INPUT; // redundant reinput
-			if(curCmd->outputNum!=0) return ERR_INVALID_OUTPUT; // redundant reoutput
+			if(curcmd.argNum!=1) return ERR_INVALID_ARG; // invalid argument num
+			if(curcmd.inputNum!=0) return ERR_INVALID_INPUT; // redundant reinput
+			if(curcmd.outputNum!=0) return ERR_INVALID_OUTPUT; // redundant reoutput
 		}
 		// invalid command name
-		else return ERR_INVALID_NAME;
+		// else return ERR_INVALID_NAME;
 	}
 	return ERR_SUCC;
 }
@@ -225,20 +226,24 @@ static int checkcmds(const struct Cmd* commands,const int commandNum)
  */
 static int execmds(const struct Cmd* commands,const int commandNum)
 {
-	for(int i = 0;i < commandNum;i++){
-		struct Cmd* curcmd = commands[i];
-		char* curname = curcmd->name;
-		int errcode = ERR_SUCC;
-
-		// ls
-		if(strcmp(curname,CMDSTR_LS)==0) errcode = execls(curcmd);
+	int errcode = ERR_SUCC;
+	if (commandNum == 1){
+		const struct Cmd command = commands[0];
+		const char* cmdname = command.name;
 		// exit
-		else if(strcmp(curname,CMDSTR_EXIT)==0) errcode = execexit(curcmd);
+		if(strcmp(cmdname,CMDSTR_EXIT)==0){
+		   	errcode = execexit(&command);
+			return errcode;
+		}
 		// cd
-		else if(strcmp(curname,CMDSTR_CD)==0) errcode = execcd(curcmd);
+		else if(strcmp(cmdname,CMDSTR_CD)==0){
+		   	errcode = execcd(&command);
+			return errcode;
+		}
 		// invalid command name
-		else errcode = ERR_INVALID_NAME;
-	}	
+		// else errcode = ERR_INVALID_NAME;
+	}
+	errcode = execothers(commands,commandNum);
 	return errcode;
 }
 
@@ -259,16 +264,18 @@ int process(const char* str)
 	if(errcode!=ERR_SUCC) return errcode;
 		
 	// get commands from above tokens
-	int cmdNum = 0; // num of commands
+	int commandNum = 0; // num of commands
 	struct Cmd commands[MAX_CMD]; // save parsed commands	
 	errcode = getcmds(tokens,tokenNum,commands,&commandNum);
 	if(errcode!=ERR_SUCC) return errcode;
 
 	// check commands
-	errcode = checkcmds(commands,cmdNum);
+	errcode = checkcmds(commands,commandNum);
 	if(errcode!=ERR_SUCC) return errcode;
 
 	// execute commands
-	errcode = execmds(commands,cmdNum);
+	errcode = execmds(commands,commandNum);
 	if(errcode!=ERR_SUCC) return errcode;
+
+	return ERR_SUCC;
 }

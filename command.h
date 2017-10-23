@@ -4,7 +4,11 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include "error.h"
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include "myerror.h"
 
 // configuration of mini shell
 #define MAX_LEN 255 // max length of string
@@ -44,8 +48,8 @@ struct Cmd{
 	char reOutput[MAX_OUTPUT][MAX_LEN]; // redirection output(single channel of output)
 };
 
-extern int execls(const struct Cmd* command);
 extern int execexit(const struct Cmd* command);
 extern int execcd(const struct Cmd* command);
+extern int execothers(const struct Cmd* commands,const int commandNum);
 
 #endif
