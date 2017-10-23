@@ -9,6 +9,10 @@ static void rmenter(char* inputStr)
 
 int main(int argc,char **argv)
 {
+	// ignore the SIGINT and SIGTSTP signal in minishell
+	signal(SIGINT, SIG_IGN);
+	signal(SIGTSTP, SIG_IGN);
+
 	// save input string
 	char inputStr[MAX_LEN];
 	// save cwd

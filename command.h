@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <signal.h>
 #include "myerror.h"
 
 // configuration of mini shell
@@ -46,6 +47,13 @@ struct Cmd{
 	int outputNum; // num of redirection output(single)
 	int outputType; // type of redirection output(TYPE_COVER or TYPE_APPEND)
 	char reOutput[MAX_OUTPUT][MAX_LEN]; // redirection output(single channel of output)
+};
+
+struct Job{
+	int jobid; // id of job
+	int pidNum; // num of pids(num of command)
+	pid_t jobpids[MAX_CMD]; // pids of the job
+	struct Job* nextjob;
 };
 
 extern int execexit(const struct Cmd* command);

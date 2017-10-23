@@ -1,5 +1,29 @@
 #include "command.h"
 
+struct Job* joblist = NULL; // store the list of suspended jobs
+
+static void addjob(const struct Job job)
+{
+	// malloc a new job
+	struct Job* newjob = (struct Job*)malloc(sizeof(struct Job));
+	memcpy(newjob,&job,sizeof(struct Job));
+
+	// get max id
+	int maxid = 0;
+	struct Job* curjob = joblist;
+	struct Job* prevjob = NULL;
+	while(curjob != NULL){
+		if(curjob->jobid > maxid) maxid = curjob->jobid;
+		prevjob = curjob;
+		curjob = curjob->nextjob;
+	}
+	newjob->jobid = maxid + 1;
+
+	// insert into the tail of the joblist
+	if(prevjob == NULL) joblist = newjob;
+	else prevjob->nextjob = newjob;
+}
+
 int execexit(const struct Cmd* command)
 {
 	exit(0);
@@ -51,6 +75,10 @@ int execothers(const struct Cmd* commands,const int commandNum)
 		pids[i] = fork();
 		// child process
 		if(pids[i]==0){
+			// restore SIGINT and SIGTSTP
+			signal(SIGINT, SIG_DFL);
+			signal(SIGTSTP, SIG_DFL);
+
 			const struct Cmd* command = &commands[i];
 			// set redirection of pipe
 			if(commandNum>1){
@@ -122,8 +150,12 @@ int execothers(const struct Cmd* commands,const int commandNum)
 	// wait chlidren
 	for(int i=0;i<commandNum;i++){
 		int status = 0;
-		if(waitpid(pids[i],&status,0)<0) return errno;
-		if(status!=0) return status; // errno of child process
+		if(waitpid(pids[i],&status,WUNTRACED)<0) return errno;
+		// check status
+		if(WIFSTOPPED(status)){
+			// do nothing
+		}
+		else if(status!=0) return status; // errno of child process
 	}
 	return ERR_SUCC;
 }
