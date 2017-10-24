@@ -35,6 +35,8 @@
 #define CMDSTR_LS "ls"
 #define CMDSTR_CD "cd"
 #define CMDSTR_EXIT "exit"
+#define CMDSTR_JOBS "jobs"
+#define CMDSTR_FG "fg"
 
 struct Cmd{
 	char name[MAX_LEN]; // command name(string)
@@ -58,6 +60,8 @@ struct Job{
 
 extern int execexit(const struct Cmd* command);
 extern int execcd(const struct Cmd* command);
+extern int execjobs(const struct Cmd* command);
+extern int execfg(const struct Cmd* command);
 extern int execothers(const struct Cmd* commands,const int commandNum);
 
 #endif

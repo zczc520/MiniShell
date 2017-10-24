@@ -188,26 +188,33 @@ static int checkcmds(const struct Cmd* commands,const int commandNum)
 		const char* curname = curcmd.name; // command name
 
 		// ls
-		if(strcmp(curname,CMDSTR_LS)==0){
+		/*if(strcmp(curname,CMDSTR_LS)==0){
 			int errcode = checkoptions(curcmd.options,curcmd.optionNum);
 			if(errcode!=ERR_SUCC) return errcode;
 			if(curcmd.inputNum!=0) return ERR_INVALID_INPUT; // redundant reinput
 			if(curcmd.outputNum!=0 && curcmd.outputType!=TYPE_COVER && curcmd.outputType!=TYPE_APPEND) return ERR_INVALID_OUTPUT_TYPE; // invalid output type
-		}
+		}*/
 		// exit
-		else if(strcmp(curname,CMDSTR_EXIT)==0){
+		if(strcmp(curname,CMDSTR_EXIT)==0){
 			if(curcmd.optionNum!=0) return ERR_INVALID_OPTION; // redundant option
 			if(curcmd.argNum!=0) return ERR_INVALID_ARG; // redundant argument
 			if(curcmd.inputNum!=0) return ERR_INVALID_INPUT; // redundant reinput
 			if(curcmd.outputNum!=0) return ERR_INVALID_OUTPUT; // redundant output
 		}
 		// cd
-		else if(strcmp(curname,CMDSTR_CD)==0){
+		else if(strcmp(curname,CMDSTR_CD)==0 || strcmp(curname,CMDSTR_FG)==0){
 			int errcode = checkoptions(curcmd.options,curcmd.optionNum);
 			if(errcode!=ERR_SUCC) return errcode;
 			if(curcmd.argNum!=1) return ERR_INVALID_ARG; // invalid argument num
 			if(curcmd.inputNum!=0) return ERR_INVALID_INPUT; // redundant reinput
 			if(curcmd.outputNum!=0) return ERR_INVALID_OUTPUT; // redundant reoutput
+		}
+		// jobs
+		else if(strcmp(curname,CMDSTR_JOBS)==0){
+			if(curcmd.optionNum!=0) return ERR_INVALID_OPTION; // redundant option
+			if(curcmd.argNum!=0) return ERR_INVALID_ARG; // redundant argument
+			if(curcmd.inputNum!=0) return ERR_INVALID_INPUT; // redundant reinput
+			if(curcmd.outputNum!=0 && curcmd.outputType!=TYPE_COVER && curcmd.outputType!=TYPE_APPEND) return ERR_INVALID_OUTPUT_TYPE; // invalid output type
 		}
 		// invalid command name
 		// else return ERR_INVALID_NAME;
@@ -238,6 +245,16 @@ static int execmds(const struct Cmd* commands,const int commandNum)
 		// cd
 		else if(strcmp(cmdname,CMDSTR_CD)==0){
 		   	errcode = execcd(&command);
+			return errcode;
+		}
+		// jobs
+		else if(strcmp(cmdname,CMDSTR_JOBS)==0){
+			errcode = execjobs(&command);
+			return errcode;
+		}
+		// fg
+		else if(strcmp(cmdname,CMDSTR_FG)==0){
+			errcode = execfg(&command);
 			return errcode;
 		}
 		// invalid command name
